@@ -39,6 +39,8 @@ fn main(){
     
 }
 
+
+
 // fn is_valid_simple_json(contents: &str) -> bool {
 //     let mut in_key = false;
 //     let mut in_value = false;
@@ -110,6 +112,8 @@ fn main(){
 
 //     valid && i == chars.len()
 // }
+
+
 
 // fn is_valid_simple_json(contents: &str) -> bool {
 //     let mut in_string = false; // 标记是否在字符串中
@@ -287,6 +291,53 @@ fn main(){
 //     stack.is_empty() && !last_was_colon
 // }
 
+fn is_valid_simple_json(contents: &str) -> bool {
+    let mut is_key=true; // 标记是否处于键的范围内
+    let mut is_value=false; // 标记是否处于值范围内
+    let mut is_string = false; // 标记是否在字符串中  
+    let mut is_quotation=false; // 标记是否在引号中
+    let mut stack=Vec::new(); // 栈用于记录当前的状态，包括是否处于字符串中，是否期待冒号，是否期待逗号，是否处于数组中，是否处于对象中
+    let trimmed=contents.trim(); // 去掉首尾空格
+    let mut inner_content=String::new();
+    if trimmed.starts_with('{') && trimmed.ends_with('}') {
+        // 确保除去 "{" 和 "}" 后的内容至少包含一个键值对
+        inner_content = (&trimmed[1..trimmed.len()-1]).to_string(); // 移除首尾的大括号
+    }
+    for ch in inner_content.chars() {
+        if ch == '{' || ch == '[' {
+            stack.push(ch);
+        } else if (ch == '}' && stack.last() == Some(&'{')) 
+        || (ch == ']' && stack.last() == Some(&'[')) {
+            stack.pop();            
+        } else if ch == ':' {         
+            if is_quotation !=true && is_key ==true && is_value ==false {
+                return false;
+            } 
+            if stack.last() == Some(&',') {
+                stack.pop();
+            }
+            // stack.push(ch);
+            is_key=false;
+            is_value=true;
+            is_quotation=false;
+        } else if ch == ',' {
+            stack.push(ch);
+            is_key=true;
+            is_value=false;
+            is_quotation=false;
+        } else if ch == '"' {
+            is_quotation=true;
+            if is_string==false  {
+                is_string=true;
+                stack.push(ch);
+            } else if is_string==true {
+                is_string=false;
+                stack.pop();
+            }            
+        }
+    };
+    return stack.is_empty() ||(stack.len() == 1 && stack.last() == Some(&':'))
+}
 
 // fn is_valid_simple_json(contents: &str) -> bool {
 //     let mut stack = Vec::new();
@@ -366,6 +417,7 @@ fn main(){
 //     // 如果堆栈为空，说明所有 '{' 都有对应的 '}'  
 //     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));  
 // }  
+
 
 
 
