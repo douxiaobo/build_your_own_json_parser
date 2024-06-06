@@ -1,5 +1,7 @@
 use std::env;
 use std::fs;
+use std::collections::HashSet;
+
 // use std::io::Read;
 fn main(){
     let args:Vec<String>=env::args().collect();
@@ -292,6 +294,7 @@ fn main(){
 // }
 
 fn is_valid_simple_json(contents: &str) -> bool {
+    let keywords:HashSet<&str>=["true","false","null"].iter().cloned().collect();
     let mut is_key=true; // 标记是否处于键的范围内
     let mut is_value=false; // 标记是否处于值范围内
     let mut is_string = false; // 标记是否在字符串中  
@@ -299,12 +302,15 @@ fn is_valid_simple_json(contents: &str) -> bool {
     let mut stack=Vec::new(); // 栈用于记录当前的状态，包括是否处于字符串中，是否期待冒号，是否期待逗号，是否处于数组中，是否处于对象中
     let trimmed=contents.trim(); // 去掉首尾空格
     let mut inner_content=String::new();
+    let mut string=String::new();
     if trimmed.starts_with('{') && trimmed.ends_with('}') {
         // 确保除去 "{" 和 "}" 后的内容至少包含一个键值对
         inner_content = (&trimmed[1..trimmed.len()-1]).to_string(); // 移除首尾的大括号
     }
     for ch in inner_content.chars() {
-        if ch == '{' || ch == '[' {
+        if is_value==true && stack.last() == Some(&':') && ch !='"' && ch!=',' {
+            string.push(ch);
+        } else if ch == '{' || ch == '[' {
             stack.push(ch);
         } else if (ch == '}' && stack.last() == Some(&'{')) 
         || (ch == ']' && stack.last() == Some(&'[')) {
@@ -325,10 +331,27 @@ fn is_valid_simple_json(contents: &str) -> bool {
             is_key=true;
             is_value=false;
             is_quotation=false;
+            if keywords.contains(&string.as_str()) {
+                string.clear(); // 清空字符串，准备接收新的键
+            } else {
+                if !string.is_empty() && !string.parse::<i32>().is_ok() { // 检查是否为数字
+                    return false;
+                }
+                string.clear(); // 清空字符串，准备接收新的键
+            }
+            // if !keywords.contains(&string.as_str()) {
+            //     return false;
+            // } else {
+            //     for c in string.chars() {
+            //         if !c.is_digit(10) && stack.last() != Some(&'"') {
+            //             return false;
+            //         }
+            //     }
+            // }
+            // string="".to_string();
         } else if ch == '"' {
             is_quotation=true;
             if is_string==false  {
-                is_string=true;
                 stack.push(ch);
             } else if is_string==true {
                 is_string=false;
