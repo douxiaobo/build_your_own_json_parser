@@ -1,47 +1,43 @@
+use std::collections::HashSet;
 use std::env;
 use std::fs;
-use std::collections::HashSet;
 
 // use std::io::Read;
-fn main(){
-    let args:Vec<String>=env::args().collect();
-    if args.len()<2{
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
         println!("Please provide a file path");
-        std::process::exit(1);  //  无效输入，退出代码为 1
+        std::process::exit(1); //  无效输入，退出代码为 1
     }
 
-    let file_path=&args[1];
+    let file_path = &args[1];
     // println!("In file {}",file_path);
 
-    let contents=fs::read_to_string(file_path).unwrap_or_else(|err|{
-        eprintln!("Failed to read file: {}",err);
+    let contents = fs::read_to_string(file_path).unwrap_or_else(|err| {
+        eprintln!("Failed to read file: {}", err);
         std::process::exit(1);
     });
-    // let mut file = fs::File::open(file_path).unwrap();  
-    // let mut contents = String::new();  
-    // // file.read_to_string(&mut contents).unwrap();  
+    // let mut file = fs::File::open(file_path).unwrap();
+    // let mut contents = String::new();
+    // // file.read_to_string(&mut contents).unwrap();
     // println!("{}", contents);
 
-    if contents.is_empty(){
+    if contents.is_empty() {
         println!("File is empty");
         println!("invalide");
     } else {
         println!("File is not empty");
-        if is_valid_simple_json(&contents) {  
+        if is_valid_simple_json(&contents) {
             println!("valid");
-            println!("File is a valid simple JSON object");  
-            std::process::exit(0);  
-        } else {  
+            println!("File is a valid simple JSON object");
+            std::process::exit(0);
+        } else {
             println!("invalid");
-            println!("File is not a valid simple JSON object");  
-            std::process::exit(1);  
-        }  
+            println!("File is not a valid simple JSON object");
+            std::process::exit(1);
+        }
     }
-
-    
 }
-
-
 
 // fn is_valid_simple_json(contents: &str) -> bool {
 //     let mut in_key = false;
@@ -114,8 +110,6 @@ fn main(){
 
 //     valid && i == chars.len()
 // }
-
-
 
 // fn is_valid_simple_json(contents: &str) -> bool {
 //     let mut in_string = false; // 标记是否在字符串中
@@ -294,72 +288,89 @@ fn main(){
 // }
 
 fn is_valid_simple_json(contents: &str) -> bool {
-    let keywords:HashSet<&str>=["true","false","null"].iter().cloned().collect();
-    let mut is_key=true; // 标记是否处于键的范围内
-    let mut is_value=false; // 标记是否处于值范围内
-    let mut is_string = false; // 标记是否在字符串中  
-    let mut is_quotation=false; // 标记是否在引号中
-    let mut stack=Vec::new(); // 栈用于记录当前的状态，包括是否处于字符串中，是否期待冒号，是否期待逗号，是否处于数组中，是否处于对象中
-    let trimmed=contents.trim(); // 去掉首尾空格
-    let mut inner_content=String::new();
-    let mut string=String::new();
+    let keywords: HashSet<&str> = ["true", "false", "null"].iter().cloned().collect();
+    let mut _is_key = true; // 标记是否处于键的范围内
+    let mut is_value = false; // 标记是否处于值范围内
+                              // let mut is_string = false; // 标记是否在字符串中
+    let mut is_quotation = false; // 标记是否在引号中
+    let mut stack = Vec::new(); // 栈用于记录当前的状态，包括是否处于字符串中，是否期待冒号，是否期待逗号，是否处于数组中，是否处于对象中
+    let trimmed = contents.trim(); // 去掉首尾空格
+    let mut inner_content = String::new();
+    let mut string = String::new();
+    let mut use_quotation = false;
     if trimmed.starts_with('{') && trimmed.ends_with('}') {
         // 确保除去 "{" 和 "}" 后的内容至少包含一个键值对
-        inner_content = (&trimmed[1..trimmed.len()-1]).to_string(); // 移除首尾的大括号
+        inner_content = (&trimmed[1..trimmed.len() - 1]).to_string(); // 移除首尾的大括号
     }
     for ch in inner_content.chars() {
-        if is_value==true && stack.last() == Some(&':') && ch !='"' && ch!=',' {
+        if is_value == true && stack.last() == Some(&':') && ch != '"' && ch != ',' {
             string.push(ch);
         } else if ch == '{' || ch == '[' {
             stack.push(ch);
-        } else if (ch == '}' && stack.last() == Some(&'{')) 
-        || (ch == ']' && stack.last() == Some(&'[')) {
-            stack.pop();            
-        } else if ch == ':' {         
-            if is_quotation !=true && is_key ==true && is_value ==false {
-                return false;
-            } 
+        } else if (ch == '}' && stack.last() == Some(&'{'))
+            || (ch == ']' && stack.last() == Some(&'['))
+        {
+            stack.pop();
+        } else if ch == ':' {
+            // if is_quotation != true && is_key == true && is_value == false {
+            //     return false;
+            // }
             if stack.last() == Some(&',') {
                 stack.pop();
+            } else {
+                stack.push(ch);
             }
             // stack.push(ch);
-            is_key=false;
-            is_value=true;
-            is_quotation=false;
+            _is_key = false;
+            is_value = true;
+            // is_quotation = false;
         } else if ch == ',' {
             stack.push(ch);
-            is_key=true;
-            is_value=false;
-            is_quotation=false;
-            if keywords.contains(&string.as_str()) {
-                string.clear(); // 清空字符串，准备接收新的键
-            } else {
-                if !string.is_empty() && !string.parse::<i32>().is_ok() { // 检查是否为数字
-                    return false;
-                }
-                string.clear(); // 清空字符串，准备接收新的键
+            _is_key = true;
+            is_value = false;
+            // is_quotation = false;
+            if use_quotation == true {
+                use_quotation = false;
+                continue;
+            } else if keywords.contains(&string.trim()) {
+                // string.clear(); // 清空字符串，准备接收新的键
+            } else if !string.is_empty() && !string.parse::<i32>().is_ok() {
+                println!("No number.");
+                // 检查是否为数字
+                return false;
             }
-            // if !keywords.contains(&string.as_str()) {
-            //     return false;
-            // } else {
-            //     for c in string.chars() {
-            //         if !c.is_digit(10) && stack.last() != Some(&'"') {
-            //             return false;
-            //         }
-            //     }
-            // }
-            // string="".to_string();
+            string.clear(); // 清空字符串，准备接收新的键
+                            // if !keywords.contains(&string.as_str()) {
+                            //     return false;
+                            // } else {
+                            //     for c in string.chars() {
+                            //         if !c.is_digit(10) && stack.last() != Some(&'"') {
+                            //             return false;
+                            //         }
+                            //     }
+                            // }
+                            // string="".to_string();
         } else if ch == '"' {
-            is_quotation=true;
-            if is_string==false  {
+            if is_quotation == false {
+                is_quotation = true;
+                // is_string = true;
                 stack.push(ch);
-            } else if is_string==true {
-                is_string=false;
+                if is_value == true {
+                    use_quotation = true;
+                }
+            } else {
+                is_quotation = false;
+                // is_string = false;
                 stack.pop();
-            }            
+            }
         }
-    };
-    return stack.is_empty() ||(stack.len() == 1 && stack.last() == Some(&':'))
+        // else if is_key == true && stack.last() != Some(&'"') {
+        //     // ./tests/step2/valid2.json
+        //     return false;
+        // }
+        // println!("ch:{},stack:{:?},string:{}", ch, stack, string);
+    }
+    return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));
 }
 
 // fn is_valid_simple_json(contents: &str) -> bool {
@@ -373,7 +384,7 @@ fn is_valid_simple_json(contents: &str) -> bool {
 //         inner_content = (&trimmed[1..trimmed.len()-1]).to_string(); // 移除首尾的大括号
 //         // 简单检查是否至少包含一个 ":" 来表示键值对
 //         // inner_content.contains(':')
-//     } 
+//     }
 
 //     for ch in inner_content.chars() {
 //         if ch=='{' || ch=='[' {
@@ -402,7 +413,7 @@ fn is_valid_simple_json(contents: &str) -> bool {
 //             stack.push(ch);
 //         } else if ch==':' && !in_string && stack.last() == Some(&',') {
 //             stack.pop();
-//             stack.push(ch);  
+//             stack.push(ch);
 //         } else if ch==',' && !in_string && stack.last() == Some(&'"') {
 //             stack.push(ch);
 //         } else if ch==',' && !in_string && stack.last() == Some(&']') {
@@ -416,51 +427,43 @@ fn is_valid_simple_json(contents: &str) -> bool {
 //     return stack.is_empty()||(stack.len() == 1 && stack.last() == Some(&':'));
 // }
 
-
-// fn is_valid_simple_json(contents: &str) -> bool {  
-//     let mut stack = Vec::new();  
-//     for ch in contents.chars() {  
-//         if ch == '{' || (ch == ':' && !stack.is_empty() && stack.last() == Some(&'{')) {  
-//             stack.push(ch);  
+// fn is_valid_simple_json(contents: &str) -> bool {
+//     let mut stack = Vec::new();
+//     for ch in contents.chars() {
+//         if ch == '{' || (ch == ':' && !stack.is_empty() && stack.last() == Some(&'{')) {
+//             stack.push(ch);
 //         } else if (ch == '}' && !stack.is_empty() && stack.last() == Some(&'{'))
-//         ||(ch == ',' && !stack.is_empty() && stack.last() == Some(&':')) {  
-//             stack.pop();  
+//         ||(ch == ',' && !stack.is_empty() && stack.last() == Some(&':')) {
+//             stack.pop();
 //             stack.push(ch)
-//         } else if ch=='"' && stack.last() == Some(&'{') {  
-//             stack.push(ch);  
+//         } else if ch=='"' && stack.last() == Some(&'{') {
+//             stack.push(ch);
 //         } else if ch==':' && stack.last() == Some(&',') {
-//             stack.pop();  
+//             stack.pop();
 //         }else if ch=='"' && !stack.is_empty() && stack.last() == Some(&'"') {
-//             stack.pop();  
-//         } else{  
-//             // 遇到其他字符或不成对的 '}'  
-//             return false;  
-//         }  
-//     }  
-//     // 如果堆栈为空，说明所有 '{' 都有对应的 '}'  
-//     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));  
-// }  
+//             stack.pop();
+//         } else{
+//             // 遇到其他字符或不成对的 '}'
+//             return false;
+//         }
+//     }
+//     // 如果堆栈为空，说明所有 '{' 都有对应的 '}'
+//     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));
+// }
 
-
-
-
-// douxiaobo@192 Rust % rustc build_your_own_json_parser.rs                    
+// douxiaobo@192 Rust % rustc build_your_own_json_parser.rs
 // douxiaobo@192 Rust % ./build_your_own_json_parser ./tests/step1/invalid.json
 // In file ./tests/step1/invalid.json
 
 // File is empty
 // invalide
-// douxiaobo@192 Rust % ./build_your_own_json_parser ./tests/step1/valid.json  
+// douxiaobo@192 Rust % ./build_your_own_json_parser ./tests/step1/valid.json
 // In file ./tests/step1/valid.json
 // {}
 // File is not empty
 // valid
 // File is a valid simple JSON object
-// douxiaobo@192 Rust % 
-
-
-
-
+// douxiaobo@192 Rust %
 
 // douxiaobo@192 build your own json parser % echo "# Build Your Own Json Parser" >> README.md
 // douxiaobo@192 build your own json parser % git init
@@ -543,7 +546,7 @@ fn is_valid_simple_json(contents: &str) -> bool {
 
 // Please make sure you have the correct access rights
 // and the repository exists.
-// douxiaobo@192 build your own json parser % git remote -v            
+// douxiaobo@192 build your own json parser % git remote -v
 // origin	git@github.com/douxiaobo/build_your_own_json_parser.git (fetch)
 // origin	git@github.com/douxiaobo/build_your_own_json_parser.git (push)
 // douxiaobo@192 build your own json parser % git push origin main
@@ -618,4 +621,4 @@ fn is_valid_simple_json(contents: &str) -> bool {
 // remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
 // To github.com:douxiaobo/build_your_own_json_parser.git
 //    73c2259..c255b9e  main -> main
-// douxiaobo@192 build your own json parser % 
+// douxiaobo@192 build your own json parser %
