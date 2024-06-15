@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+// use std::collections::HashSet;
 use std::env;
 use std::fs;
 
@@ -39,257 +39,9 @@ fn main() {
     }
 }
 
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut in_key = false;
-//     let mut in_value = false;
-//     let mut expect_colon = false;
-//     let mut expect_comma = false;
-//     let mut valid = true;
-
-//     let chars: Vec<char> = contents.chars().collect();
-//     let mut i = 0;
-
-//     while i < chars.len() && valid {
-//         match chars[i] {
-//             '{' => {
-//                 if i != 0 || expect_colon || in_key || in_value || expect_comma {
-//                     valid = false;
-//                 }
-//                 in_key = true; // 准备读取键
-//             }
-//             '"' => {
-//                 if in_key {
-//                     // 键的开始或结束
-//                     in_key = false;
-//                     expect_colon = true;
-//                 } else if expect_colon {
-//                     // 值的开始
-//                     in_value = true;
-//                 } else if in_value {
-//                     // 值的结束
-//                     in_value = false;
-//                     expect_comma = true;
-//                 }
-//             }
-//             ':' => {
-//                 if expect_colon {
-//                     expect_colon = false;
-//                 } else {
-//                     valid = false;
-//                 }
-//             }
-//             ',' => {
-//                 if expect_comma {
-//                     expect_comma = false;
-//                     in_key = true; // 准备下一个键
-//                 } else {
-//                     valid = false;
-//                 }
-//             }
-//             '}' => {
-//                 if !in_key && !in_value && !expect_colon && !expect_comma {
-//                     // 结束对象，验证成功
-//                 } else {
-//                     valid = false;
-//                 }
-//             }
-//             _ => {
-//                 if in_key && chars[i].is_alphanumeric() || chars[i] == '_' {
-//                     // 键中允许字母、数字和下划线
-//                 } else if in_value && chars[i].is_alphanumeric() || chars[i] == '_' {
-//                     // 值中允许字母、数字和下划线
-//                 } else if chars[i] == ' ' || chars[i] == '\n' || chars[i] == '\r' || chars[i] == '\t' {
-//                     // 忽略空白字符
-//                 } else {
-//                     valid = false;
-//                 }
-//             }
-//         }
-//         i += 1;
-//     }
-
-//     valid && i == chars.len()
-// }
-
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut in_string = false; // 标记是否在字符串中
-//     let mut in_key = false;    // 标记是否在键中
-//     let mut expect_colon = false; // 标记是否期待一个冒号
-//     let mut expect_value = false; // 标记是否期待一个值
-
-//     for (_i, ch) in contents.chars().enumerate() {
-//         if ch == '"' {
-//             // 进入或退出字符串
-//             in_string = !in_string;
-//             if in_key {
-//                 // 如果在键中并且找到了引号，则期待一个冒号
-//                 expect_colon = true;
-//                 in_key = false;
-//             } else if expect_colon {
-//                 // 如果期待冒号并且找到了引号，则期待一个值
-//                 expect_value = true;
-//                 expect_colon = false;
-//             }
-//         } else if !in_string {
-//             if ch == '{' {
-//                 // 进入 JSON 对象
-//             } else if ch == '}' {
-//                 // 退出 JSON 对象，如果所有都匹配，则返回 true
-//                 return !in_key && !expect_colon && !expect_value && !in_string;
-//             } else if ch == ':' && expect_colon {
-//                 // 找到了期待的冒号
-//                 expect_colon = false;
-//                 expect_value = true;
-//             } else if ch == ',' && !expect_colon && !expect_value {
-//                 // 逗号是键值对之间的分隔符，重置期待状态
-//                 in_key = false;
-//                 expect_colon = false;
-//                 expect_value = false;
-//             } else if (ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r') && !in_key && !expect_colon && !expect_value {
-//                 // 忽略空白字符
-//             } else if (ch == 'k' || ch == 'v') && !in_key && !expect_colon && !expect_value {
-//                 // 假设键和值可以以 'k' 或 'v' 开始
-//                 in_key = true;
-//             } else if ch == '=' && expect_value {
-//                 // 假设值可以以 '=' 开始（这不是标准的 JSON 格式，但根据您的示例似乎需要）
-//                 expect_value = false;
-//             } else {
-//                 // 任何其他字符都会导致验证失败
-//                 return false;
-//             }
-//         }
-//     }
-
-//     // 如果所有字符都匹配了，且没有未闭合的字符串或未完成的键值对，则返回 true
-//     !in_string && !in_key && !expect_colon && !expect_value
-// }
-
-// use std::collections::VecDeque;
-
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut stack = VecDeque::new();
-//     let mut in_string = false;
-
-//     // 跳过首尾空白字符
-//     let trimmed = contents.trim();
-
-//     // 检查是否是对象格式，即以 { 开头并以 } 结尾
-//     if trimmed.starts_with('{') && trimmed.ends_with('}') {
-//         for (i, ch) in trimmed[1..trimmed.len()-1].chars().enumerate() {
-//             if ch == '"' {
-//                 // 进入或离开字符串
-//                 in_string = !in_string;
-//             } else if !in_string {
-//                 if ch == '{' {
-//                     stack.push_back(i);
-//                 } else if ch == '}' {
-//                     if let Some(top) = stack.pop_back() {
-//                         if top != i {
-//                             // 匹配的 { 必须在当前 } 之前
-//                             return false;
-//                         }
-//                     } else {
-//                         // 没有匹配的 {
-//                         return false;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-
-//     // 如果栈为空且没有未关闭的字符串，则为有效 JSON 对象
-//     stack.is_empty() && !in_string
-// }
-
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     // 检查是否是有效的 JSON 对象
-//     let mut stack = Vec::new();
-//     let mut in_string = false;
-//     let mut in_key = false; // 标记是否在键的范围内
-
-//     for ch in contents.chars() {
-//         if ch == '"' {
-//             // 切换字符串状态
-//             in_string = !in_string;
-//             in_key = false; // 字符串开始，键结束
-//         } else if !in_string {
-//             if ch == '{' {
-//                 // 进入一个新的 JSON 对象
-//                 stack.push('{');
-//             } else if ch == '}' {
-//                 // 尝试关闭 JSON 对象
-//                 if stack.last() == Some(&'{') {
-//                     stack.pop();
-//                 } else {
-//                     return false; // 没有匹配的 '{'
-//                 }
-//             } else if ch == ':' && !stack.is_empty() && stack.last() == Some(&'"') {
-//                 // 键后面跟冒号
-//                 in_key = false;
-//             } else if ch == ',' {
-//                 // 逗号，分隔键值对或对象
-//                 if stack.last() == Some(&'}') || stack.last() == Some(&'{') {
-//                     return false; // 逗号后不能直接是 '{' 或 '}'
-//                 }
-//             } else if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
-//                 // 忽略空白字符
-//             } else {
-//                 // 其他字符，如果是字母、数字或下划线开头，则可能是键的开始
-//                 in_key = true;
-//             }
-//         }
-//     }
-
-//     // 最终检查栈是否为空且没有未关闭的字符串或键
-//     stack.is_empty() && !in_string && !in_key
-// }
-
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut stack = Vec::new();
-//     let mut in_string = false;
-//     let mut last_was_colon = false; // 用于跟踪上次是否是冒号
-
-//     for ch in contents.chars() {
-//         if ch == '"' {
-//             in_string = !in_string; // 切换字符串状态
-//         } else if !in_string {
-//             if ch == '{' || ch == '[' {
-//                 stack.push(ch);
-//             } else if ch == '}' || ch == ']' {
-//                 if stack.last() != Some(&match ch {
-//                     '}' => '{',
-//                     ']' => '[',
-//                     _ => unreachable!(),
-//                 }) {
-//                     return false;
-//                 }
-//                 stack.pop();
-//             } else if ch == ':' {
-//                 if last_was_colon || stack.last() != Some(&'"') {
-//                     return false;
-//                 }
-//                 last_was_colon = true;
-//             } else if ch == ',' {
-//                 if stack.last() != Some(&'{') && !last_was_colon {
-//                     return false;
-//                 }
-//                 last_was_colon = false;
-//             } else if !ch.is_whitespace() {
-//                 // 非空白字符且不在字符串中，应为无效字符
-//                 return false;
-//             }
-//         } else {
-//             // 字符串中可以包含任何字符，包括 `{`、`}`、`:` 和 `,`
-//         }
-//     }
-
-//     // 检查栈是否为空以及 last_was_colon 是否为 false
-//     stack.is_empty() && !last_was_colon
-// }
-
 fn is_valid_simple_json(contents: &str) -> bool {
-    let keywords: HashSet<&str> = ["true", "false", "null"].iter().cloned().collect();
-    let mut _is_key = true; // 标记是否处于键的范围内
+    // let keywords: HashSet<&str> = ["true", "false", "null"].iter().cloned().collect();
+    let mut is_key = true; // 标记是否处于键的范围内
     let mut is_value = false; // 标记是否处于值范围内
                               // let mut is_string = false; // 标记是否在字符串中
     let mut is_quotation = false; // 标记是否在引号中
@@ -297,13 +49,19 @@ fn is_valid_simple_json(contents: &str) -> bool {
     let trimmed = contents.trim(); // 去掉首尾空格
     let mut inner_content = String::new();
     let mut string = String::new();
-    let mut use_quotation = false;
+    let mut use_quotation = false;  //标记是否使用引号
     if trimmed.starts_with('{') && trimmed.ends_with('}') {
         // 确保除去 "{" 和 "}" 后的内容至少包含一个键值对
         inner_content = (&trimmed[1..trimmed.len() - 1]).to_string(); // 移除首尾的大括号
     }
     for ch in inner_content.chars() {
-        if is_value == true && stack.last() == Some(&':') && ch != '"' && ch != ',' {
+        if ch=='\'' {
+            return false;
+        }
+        else if is_value == true && stack.last() == Some(&':') && ch != '"' && ch != ',' {
+            if ch.is_uppercase(){
+                return false;
+            }
             string.push(ch);
         } else if ch == '{' || ch == '[' {
             stack.push(ch);
@@ -320,25 +78,30 @@ fn is_valid_simple_json(contents: &str) -> bool {
             } else {
                 stack.push(ch);
             }
+            if use_quotation==false && is_key == true && is_value == false {
+                return false;
+            }
             // stack.push(ch);
-            _is_key = false;
+            is_key = false;
             is_value = true;
             // is_quotation = false;
         } else if ch == ',' {
             stack.push(ch);
-            _is_key = true;
+            is_key = true;
             is_value = false;
             // is_quotation = false;
             if use_quotation == true {
                 use_quotation = false;
-                continue;
-            } else if keywords.contains(&string.trim()) {
+                // continue;
+            } else if string!="true" || string!="false" || string!="null" {
+                // else if !keywords.contains(&string.trim()) {
+                return false;
                 // string.clear(); // 清空字符串，准备接收新的键
             } else if !string.is_empty() && !string.parse::<i32>().is_ok() {
                 println!("No number.");
-                // 检查是否为数字
+                // // 检查是否为数字
                 return false;
-            }
+            } 
             string.clear(); // 清空字符串，准备接收新的键
                             // if !keywords.contains(&string.as_str()) {
                             //     return false;
@@ -355,9 +118,10 @@ fn is_valid_simple_json(contents: &str) -> bool {
                 is_quotation = true;
                 // is_string = true;
                 stack.push(ch);
-                if is_value == true {
-                    use_quotation = true;
-                }
+                // if is_value == true {
+                //     use_quotation = true;
+                // }
+                use_quotation = true;
             } else {
                 is_quotation = false;
                 // is_string = false;
@@ -373,83 +137,12 @@ fn is_valid_simple_json(contents: &str) -> bool {
     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));
 }
 
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut stack = Vec::new();
-//     let mut in_string = false; // 添加一个标志来跟踪是否处于字符串中，避免逗号和冒号在字符串内被误判
 
-//     let trimmed = contents.trim();  // 去掉首尾空格
-//     let mut inner_content=String::new();
-//     if trimmed.starts_with('{') && trimmed.ends_with('}') {
-//         // 确保除去 "{" 和 "}" 后的内容至少包含一个键值对
-//         inner_content = (&trimmed[1..trimmed.len()-1]).to_string(); // 移除首尾的大括号
-//         // 简单检查是否至少包含一个 ":" 来表示键值对
-//         // inner_content.contains(':')
-//     }
 
-//     for ch in inner_content.chars() {
-//         if ch=='{' || ch=='[' {
-//             stack.push(ch);
-//         } else if ch=='}' {
-//             if stack.last() != Some(&'{') {
-//                 return false;
-//             }
-//             stack.pop();
-//         } else if ch==']' {
-//             if stack.last() != Some(&'[') {
-//                 return false;
-//             }
-//             stack.pop();
-//         } else if ch=='"' &&(stack.is_empty() || stack.last() != Some(&',')) {
-//             in_string = !in_string; // 切换字符串状态
-//             if in_string {
-//                 stack.push(ch);
-//             } else {
-//                 if stack.last() != Some(&'"') {
-//                     return false;
-//                 }
-//                 stack.pop();
-//             }
-//         } else if ch==':' && !in_string && stack.last() != Some(&',') {
-//             stack.push(ch);
-//         } else if ch==':' && !in_string && stack.last() == Some(&',') {
-//             stack.pop();
-//             stack.push(ch);
-//         } else if ch==',' && !in_string && stack.last() == Some(&'"') {
-//             stack.push(ch);
-//         } else if ch==',' && !in_string && stack.last() == Some(&']') {
-//             stack.push(ch);
-//         } else{
-//             // 遇到其他字符或不成对的 '}'
-//             return false;
-//         }
-//     }
-//     // 如果堆栈为空，说明所有 '{' 都有对应的 '}'
-//     return stack.is_empty()||(stack.len() == 1 && stack.last() == Some(&':'));
-// }
 
-// fn is_valid_simple_json(contents: &str) -> bool {
-//     let mut stack = Vec::new();
-//     for ch in contents.chars() {
-//         if ch == '{' || (ch == ':' && !stack.is_empty() && stack.last() == Some(&'{')) {
-//             stack.push(ch);
-//         } else if (ch == '}' && !stack.is_empty() && stack.last() == Some(&'{'))
-//         ||(ch == ',' && !stack.is_empty() && stack.last() == Some(&':')) {
-//             stack.pop();
-//             stack.push(ch)
-//         } else if ch=='"' && stack.last() == Some(&'{') {
-//             stack.push(ch);
-//         } else if ch==':' && stack.last() == Some(&',') {
-//             stack.pop();
-//         }else if ch=='"' && !stack.is_empty() && stack.last() == Some(&'"') {
-//             stack.pop();
-//         } else{
-//             // 遇到其他字符或不成对的 '}'
-//             return false;
-//         }
-//     }
-//     // 如果堆栈为空，说明所有 '{' 都有对应的 '}'
-//     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));
-// }
+
+
+
 
 // douxiaobo@192 Rust % rustc build_your_own_json_parser.rs
 // douxiaobo@192 Rust % ./build_your_own_json_parser ./tests/step1/invalid.json
