@@ -55,10 +55,9 @@ fn is_valid_simple_json(contents: &str) -> bool {
         inner_content = (&trimmed[1..trimmed.len() - 1]).to_string(); // 移除首尾的大括号
     }
     for ch in inner_content.chars() {
-        if ch=='\'' {
+        if ch == '\'' { // 新增：检查单引号
             return false;
-        }
-        else if is_value == true && stack.last() == Some(&':') && ch != '"' && ch != ',' {
+        } else if is_value == true && stack.last() == Some(&':') && ch != '"' && ch != ',' {
             if ch.is_uppercase(){
                 return false;
             }
@@ -103,16 +102,6 @@ fn is_valid_simple_json(contents: &str) -> bool {
                 return false;
             } 
             string.clear(); // 清空字符串，准备接收新的键
-                            // if !keywords.contains(&string.as_str()) {
-                            //     return false;
-                            // } else {
-                            //     for c in string.chars() {
-                            //         if !c.is_digit(10) && stack.last() != Some(&'"') {
-                            //             return false;
-                            //         }
-                            //     }
-                            // }
-                            // string="".to_string();
         } else if ch == '"' {
             if is_quotation == false {
                 is_quotation = true;
@@ -132,7 +121,7 @@ fn is_valid_simple_json(contents: &str) -> bool {
         //     // ./tests/step2/valid2.json
         //     return false;
         // }
-        // println!("ch:{},stack:{:?},string:{}", ch, stack, string);
+        println!("ch:{},stack:{:?},string:{}", ch, stack, string);
     }
     return stack.is_empty() || (stack.len() == 1 && stack.last() == Some(&':'));
 }
@@ -315,3 +304,50 @@ fn is_valid_simple_json(contents: &str) -> bool {
 // To github.com:douxiaobo/build_your_own_json_parser.git
 //    73c2259..c255b9e  main -> main
 // douxiaobo@192 build your own json parser %
+
+
+// douxiaobo@192 rust % rustc build_your_own_json_parser.rs
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step4/invalid.json
+// File is not empty
+// invalid
+// File is not a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step4/valid.json 
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step4/valid2.json
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step3/valid.json
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step3/invalid.json
+// File is not empty
+// invalid
+// File is not a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step2/invalid.json
+// File is not empty
+// invalid
+// File is not a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step2/invalid2.json
+// File is not empty
+// invalid
+// File is not a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step2/valid.json 
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step2/valid2.json
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step1/valid.json 
+// File is not empty
+// valid
+// File is a valid simple JSON object
+// douxiaobo@192 rust % ./build_your_own_json_parser ./tests/step1/invalid.json
+// File is empty
+// invalide
+// douxiaobo@192 rust % 
